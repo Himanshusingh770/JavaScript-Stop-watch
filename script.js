@@ -5,6 +5,14 @@ let previousLapTime = 0;
 let isStopwatchActive = false;
 let pausedTime = 0;
 
+// Toggle button visibility
+function toggleButtonVisibility({ start, stop, lap, reset }) {
+  document.getElementById('start').style.display = start;
+  document.getElementById('stop').style.display = stop;
+  document.getElementById('lap').style.display = lap;
+  document.getElementById('reset').style.display = reset;
+}
+
 // Start the stopwatch
 function startStopwatch() {
   if (!isStopwatchActive) {
@@ -50,23 +58,22 @@ function resetStopwatch() {
 
 // Update the stopwatch display
 function updateDisplay(isReset = false) {
-  const elapsedTime = new Date(Date.now() - startTime);
+  const elapsedTime = Date.now() - startTime;
 
-  let hours = elapsedTime.getUTCHours();  
-  let minutes = elapsedTime.getUTCMinutes();
-  let seconds = elapsedTime.getUTCSeconds();
-  let milliseconds = Math.floor(elapsedTime.getUTCMilliseconds() / 10); 
+  // Create a Date object with the elapsed time in milliseconds
+  const elapsedDate = new Date(elapsedTime);
 
+  let hours = elapsedDate.getUTCHours(); // Get hours
+  let minutes = elapsedDate.getUTCMinutes(); // Get minutes
+  let seconds = elapsedDate.getUTCSeconds(); // Get seconds
+  let milliseconds = Math.floor(elapsedDate.getUTCMilliseconds() / 10); // Convert ms to centiseconds
+
+  // Format the time and display it
   if (hours > 0) {
-    document.getElementById('hour-display').classList.remove('hidden');
+    document.getElementById('timeDisplay').innerText = `${formatTime(hours)}:${formatTime(minutes)}:${formatTime(seconds)}.${formatMilliseconds(milliseconds)}`;
   } else {
-    document.getElementById('hour-display').classList.add('hidden');
+    document.getElementById('timeDisplay').innerText = `${formatTime(minutes)}:${formatTime(seconds)}.${formatMilliseconds(milliseconds)}`;
   }
-
-  document.getElementById('hour-display').innerText = formatTime(hours);
-  document.getElementById('minute-display').innerText = formatTime(minutes);
-  document.getElementById('second-display').innerText = formatTime(seconds);
-  document.getElementById('millisecond-display').innerText = formatMilliseconds(milliseconds);
 
   if (isReset) {
     resetDisplay();
@@ -102,25 +109,18 @@ function recordLap() {
   document.getElementById('laps-table').style.display = 'table'; // Show laps table
 }
 
-// Helper functions
+// Format lap time
 function formatLapDifference(lapTime) {
-  // Create a new Date object with lapTime milliseconds
   const lapDate = new Date(lapTime);
 
-  // Extract time components from the Date object
   const minutes = lapDate.getUTCMinutes();
   const seconds = lapDate.getUTCSeconds();
   const milliseconds = Math.floor(lapDate.getUTCMilliseconds() / 10); // Convert ms to centiseconds
 
-  // Format the components
-  const formattedMinutes = String(minutes).padStart(2, '0');
-  const formattedSeconds = String(seconds).padStart(2, '0');
-  const formattedMilliseconds = String(milliseconds).padStart(2, '0');
-
-  return `${formattedMinutes}:${formattedSeconds}.${formattedMilliseconds}`;
+  return `${formatTime(minutes)}:${formatTime(seconds)}.${formatMilliseconds(milliseconds)}`;
 }
 
-
+// Helper functions
 function formatTime(time) {
   return time < 10 ? '0' + time : time;
 }
@@ -130,17 +130,5 @@ function formatMilliseconds(ms) {
 }
 
 function resetDisplay() {
-  document.getElementById('hour-display').classList.add('hidden');
-  document.getElementById('hour-display').innerText = "00";
-  document.getElementById('minute-display').innerText = "00";
-  document.getElementById('second-display').innerText = "00";
-  document.getElementById('millisecond-display').innerText = "00";
-}
-
-// Toggle button visibility
-function toggleButtonVisibility({ start, stop, lap, reset }) {
-  document.getElementById('start').style.display = start;
-  document.getElementById('stop').style.display = stop;
-  document.getElementById('lap').style.display = lap;
-  document.getElementById('reset').style.display = reset;
+  document.getElementById('timeDisplay').innerText = "00:00:00";
 }
