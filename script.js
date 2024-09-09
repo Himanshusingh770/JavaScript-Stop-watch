@@ -1,24 +1,18 @@
-let hours = 0;
-let minutes = 0;
-let seconds = 0;
-let milliseconds = 0;
+let startTime;
 let timerInterval;
-let isStopwatchActive = false;
-let previousLapTime = 0;
 let lapCounter = 0;
+let previousLapTime = 0;
+let isStopwatchActive = false;
 
 // Start the stopwatch
 function startStopwatch() {
   if (!isStopwatchActive) {
     isStopwatchActive = true;
+    startTime = Date.now() - (previousLapTime || 0); // Adjust for time after a lap or pause
     timerInterval = setInterval(updateDisplay, 10);
 
-    // Show Stop, Lap, and Reset buttons
-    document.getElementById('start').style.display = 'none';
-    document.getElementById('stop').style.display = 'inline-block';
-    document.getElementById('lap').style.display = 'inline-block';
-    document.getElementById('lap').disabled = false; // Enable Lap button
-    document.getElementById('reset').style.display = 'inline-block';
+    toggleButtonVisibility({ start: 'none', stop: 'inline-block', lap: 'inline-block', reset: 'inline-block' });
+    document.getElementById('lap').disabled = false;
   }
 }
 
@@ -27,11 +21,9 @@ function stopStopwatch() {
   isStopwatchActive = false;
   clearInterval(timerInterval);
 
-  // Show Start button again, hide Stop button
-  document.getElementById('start').style.display = 'inline-block';
-  document.getElementById('stop').style.display = 'none';
+  previousLapTime = Date.now() - startTime;
 
-  // Disable Lap button
+  toggleButtonVisibility({ start: 'inline-block', stop: 'none', lap: 'inline-block', reset: 'inline-block' });
   document.getElementById('lap').disabled = true;
 }
 
@@ -39,12 +31,11 @@ function stopStopwatch() {
 function resetStopwatch() {
   isStopwatchActive = false;
   clearInterval(timerInterval);
-  hours = 0;
-  minutes = 0;
-  seconds = 0;
-  milliseconds = 0;
+
+  startTime = 0;
   previousLapTime = 0;
   lapCounter = 0;
+
   updateDisplay(true); // Reset display
 
   // Clear laps
@@ -52,73 +43,87 @@ function resetStopwatch() {
   document.getElementById('laps-table').style.display = 'none'; // Hide laps table
 
   // Reset buttons: only Start button visible
-  document.getElementById('start').style.display = 'inline-block';
-  document.getElementById('stop').style.display = 'none';
-  document.getElementById('lap').style.display = 'none';
-  document.getElementById('reset').style.display = 'none';
+  toggleButtonVisibility({ start: 'inline-block', stop: 'none', lap: 'none', reset: 'none' });
 }
 
 // Update the stopwatch display
 function updateDisplay(isReset = false) {
-  if (!isReset) {  // Only update milliseconds if it's not a reset
-    milliseconds += 10;
-  }
+  const elapsedTime = new Date(Date.now() - startTime);
 
-  if (milliseconds === 1000) {
-    milliseconds = 0;
-    seconds++;
-  }
-  if (seconds === 60) {
-    seconds = 0;
-    minutes++;
-  }
-  if (minutes === 60) {
-    minutes = 0;
-    hours++;
-  }
+  // Using Date methods to extract time components
+  let minutes = elapsedTime.getUTCMinutes();
+  let seconds = elapsedTime.getUTCSeconds();
+  let milliseconds = Math.floor(elapsedTime.getUTCMilliseconds() / 10); // Convert ms to centiseconds
 
+  // Update display with formatted time
   document.getElementById('minute-display').innerText = formatTime(minutes);
   document.getElementById('second-display').innerText = formatTime(seconds);
-  document.getElementById('millisecond-display').innerText = isReset ? "00" : formatMilliseconds(milliseconds);
+  document.getElementById('millisecond-display').innerText = formatMilliseconds(milliseconds);
+
+  if (isReset) {
+    resetDisplay();
+  }
 }
 
-// Format the time to always show two digits
-function formatTime(time) {
-  return time < 10 ? '0' + time : time;
-}
 
-// Format milliseconds to always show two digits (00-99)
-function formatMilliseconds(ms) {
-  return Math.floor(ms / 10).toString().padStart(2, '0');
-}
-
-// Record the lap and add it to the laps table
+// Record the lap
 function recordLap() {
-  if (document.getElementById('lap').disabled) return; // Prevent lap recording when button is disabled
+  if (!isStopwatchActive) return; // Prevent lap recording when stopwatch is stopped
 
-  const currentLapTime = hours * 3600000 + minutes * 60000 + seconds * 1000 + milliseconds;
+  const currentLapTime = Date.now() - startTime;
   const lapDifference = currentLapTime - previousLapTime;
 
-  // Calculate the time components for the lap difference
-  const lapHours = Math.floor(lapDifference / 3600000);
-  const lapMinutes = Math.floor((lapDifference % 3600000) / 60000);
-  const lapSeconds = Math.floor((lapDifference % 60000) / 1000);
-  const lapMilliseconds = lapDifference % 1000;
+  // Calculate time components for lap difference
+  const formattedLapDiff = formatLapDifference(lapDifference);
+  const formattedTotalTime = formatLapDifference(currentLapTime);
 
   // Create a new row for the lap
   const lapRow = document.createElement('tr');
   lapRow.innerHTML = `
     <td>${++lapCounter}</td>
-    <td>${formatTime(lapHours)}:${formatTime(lapMinutes)}:${formatTime(lapSeconds)}.${formatMilliseconds(lapMilliseconds)}</td>
-    <td>${formatTime(hours)}:${formatTime(minutes)}:${formatTime(seconds)}.${formatMilliseconds(milliseconds)}</td> <!-- Swapped order -->
+    <td>${formattedLapDiff}</td>
+    <td>${formattedTotalTime}</td>
   `;
 
-  // Prepend the new row to the laps table (show most recent first)
+  // Prepend the new row to the laps table (show most recent lap first)
   const lapsContainer = document.getElementById('laps-container');
-  lapsContainer.insertBefore(lapRow, lapsContainer.firstChild); // Insert new row at the top
+  lapsContainer.insertBefore(lapRow, lapsContainer.firstChild);
 
   document.getElementById('laps-table').style.display = 'table'; // Show laps table
 
   // Update the previous lap time
   previousLapTime = currentLapTime;
+}
+
+// Helper function to format lap differences
+function formatLapDifference(lapTime) {
+  let minutes = Math.floor(lapTime / 60000);
+  let seconds = Math.floor((lapTime % 60000) / 1000);
+  let milliseconds = Math.floor((lapTime % 1000) / 10);
+
+  return `${formatTime(minutes)}:${formatTime(seconds)}.${formatMilliseconds(milliseconds)}`;
+}
+
+// Helper functions for formatting time
+function formatTime(time) {
+  return time < 10 ? '0' + time : time;
+}
+
+function formatMilliseconds(ms) {
+  return ms.toString().padStart(2, '0');
+}
+
+// Helper function to reset the display
+function resetDisplay() {
+  document.getElementById('minute-display').innerText = "00";
+  document.getElementById('second-display').innerText = "00";
+  document.getElementById('millisecond-display').innerText = "00";
+}
+
+// Helper function to toggle visibility of buttons
+function toggleButtonVisibility({ start, stop, lap, reset }) {
+  document.getElementById('start').style.display = start;
+  document.getElementById('stop').style.display = stop;
+  document.getElementById('lap').style.display = lap;
+  document.getElementById('reset').style.display = reset;
 }

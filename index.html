@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  
   <div class="stopwatch-container">
     <h1>STOPWATCH</h1>
     <h2>VANILLA JAVASCRIPT STOPWATCH</h2>
@@ -18,22 +17,21 @@
     </div>
     <div class="buttons">
       <button id="start" onclick="startStopwatch()">Start</button>
-      <button id="stop" onclick="stopStopwatch()" style="display: none;">Stop</button>
-      <button id="lap" onclick="recordLap()" style="display: none;">Lap</button>
-      <button id="reset" onclick="resetStopwatch()" style="display: none;">Reset</button>
+      <button id="stop" onclick="stopStopwatch()">Stop</button>
+      <button id="lap" onclick="recordLap()">Lap</button>
+      <button id="reset" onclick="resetStopwatch()">Reset</button>
     </div>
-    <table id="laps-table" style="display: none; width: 100%; text-align: center;">
+    <table id="laps-table">
       <thead>
         <tr>
-          <th class="lap-text">Lap No.</th>
-          <th class="lap-text" >Lap Time</th> <!-- Swapped with Total Time -->
-          <th class="lap-text">Total Time</th>
+          <th>Lap No.</th>
+          <th>Lap Time</th>
+          <th>Total Time</th>
         </tr>
       </thead>
       <tbody id="laps-container"></tbody>
     </table>
   </div>
-
   <script src="./script.js"></script>
 </body>
 </html>
