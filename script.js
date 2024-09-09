@@ -3,59 +3,59 @@ let minutes = 0;
 let seconds = 0;
 let milliseconds = 0;
 let timerInterval;
-let isStopwatchActive= false;
+let isStopwatchActive = false;
 let previousLapTime = 0;
-let hourSectionAdded = false;  // Track if hour section is added
+let lapCounter = 0;
 
 // Start the stopwatch
 function startStopwatch() {
   if (!isStopwatchActive) {
-    isStopwatchActive= true;
-    timerInterval = setInterval(updateDisplay, 10);  // Update every 10ms for milliseconds
+    isStopwatchActive = true;
+    timerInterval = setInterval(updateDisplay, 10);
 
-    // Show Stop button and keep Start and Reset buttons
+    // Show Stop, Lap, and Reset buttons
     document.getElementById('start').style.display = 'none';
     document.getElementById('stop').style.display = 'inline-block';
+    document.getElementById('lap').style.display = 'inline-block';
+    document.getElementById('lap').disabled = false; // Enable Lap button
     document.getElementById('reset').style.display = 'inline-block';
   }
 }
 
 // Stop the stopwatch
 function stopStopwatch() {
-  isStopwatchActive= false;
+  isStopwatchActive = false;
   clearInterval(timerInterval);
 
-  // Show Start and Reset buttons, but hide Stop button
+  // Show Start button again, hide Stop button
   document.getElementById('start').style.display = 'inline-block';
   document.getElementById('stop').style.display = 'none';
-  document.getElementById('reset').style.display = 'inline-block';
+
+  // Disable Lap button
+  document.getElementById('lap').disabled = true;
 }
 
 // Reset the stopwatch
 function resetStopwatch() {
-  isStopwatchActive= false;
+  isStopwatchActive = false;
   clearInterval(timerInterval);
   hours = 0;
   minutes = 0;
   seconds = 0;
   milliseconds = 0;
   previousLapTime = 0;
-  hourSectionAdded = false;  // Reset hour section tracking
-  updateDisplay(true);  // Force display to "00"
+  lapCounter = 0;
+  updateDisplay(true); // Reset display
 
-  // Clear the laps display
+  // Clear laps
   document.getElementById('laps-container').innerHTML = '';
+  document.getElementById('laps-table').style.display = 'none'; // Hide laps table
 
-  // Remove the hour display if it was added
-  const hourDisplay = document.getElementById('hour-display');
-  if (hourDisplay) {
-    hourDisplay.remove();
-  }
-
-  // Reset buttons back to initial state (Start and Reset buttons)
+  // Reset buttons: only Start button visible
   document.getElementById('start').style.display = 'inline-block';
   document.getElementById('stop').style.display = 'none';
-  document.getElementById('reset').style.display = 'inline-block';
+  document.getElementById('lap').style.display = 'none';
+  document.getElementById('reset').style.display = 'none';
 }
 
 // Update the stopwatch display
@@ -75,18 +75,8 @@ function updateDisplay(isReset = false) {
   if (minutes === 60) {
     minutes = 0;
     hours++;
-
-    // Add hour section dynamically if it's not already added
-    if (!hourSectionAdded) {
-      addHourDisplay();
-      hourSectionAdded = true;
-    }
   }
 
-  // Update the UI with formatted time
-  if (hours > 0) {
-    document.getElementById('hour-display').innerText = formatTime(hours);
-  }
   document.getElementById('minute-display').innerText = formatTime(minutes);
   document.getElementById('second-display').innerText = formatTime(seconds);
   document.getElementById('millisecond-display').innerText = isReset ? "00" : formatMilliseconds(milliseconds);
@@ -102,35 +92,33 @@ function formatMilliseconds(ms) {
   return Math.floor(ms / 10).toString().padStart(2, '0');
 }
 
-// Record the lap time and display it
+// Record the lap and add it to the laps table
 function recordLap() {
+  if (document.getElementById('lap').disabled) return; // Prevent lap recording when button is disabled
+
   const currentLapTime = hours * 3600000 + minutes * 60000 + seconds * 1000 + milliseconds;
   const lapDifference = currentLapTime - previousLapTime;
 
-  // Calculate hours, minutes, seconds, and milliseconds for the lap difference
+  // Calculate the time components for the lap difference
   const lapHours = Math.floor(lapDifference / 3600000);
   const lapMinutes = Math.floor((lapDifference % 3600000) / 60000);
   const lapSeconds = Math.floor((lapDifference % 60000) / 1000);
   const lapMilliseconds = lapDifference % 1000;
 
-  const lapElement = document.createElement('div');
-  lapElement.textContent = `Lap ${document.getElementById('laps-container').childElementCount + 1}: ` + 
-                           `${formatTime(lapHours)}:${formatTime(lapMinutes)}:${formatTime(lapSeconds)}.${formatMilliseconds(lapMilliseconds)}`;
-  
-  document.getElementById('laps-container').appendChild(lapElement);
+  // Create a new row for the lap
+  const lapRow = document.createElement('tr');
+  lapRow.innerHTML = `
+    <td>${++lapCounter}</td>
+    <td>${formatTime(lapHours)}:${formatTime(lapMinutes)}:${formatTime(lapSeconds)}.${formatMilliseconds(lapMilliseconds)}</td>
+    <td>${formatTime(hours)}:${formatTime(minutes)}:${formatTime(seconds)}.${formatMilliseconds(milliseconds)}</td> <!-- Swapped order -->
+  `;
 
-  // Update previous lap time to the current lap time
+  // Prepend the new row to the laps table (show most recent first)
+  const lapsContainer = document.getElementById('laps-container');
+  lapsContainer.insertBefore(lapRow, lapsContainer.firstChild); // Insert new row at the top
+
+  document.getElementById('laps-table').style.display = 'table'; // Show laps table
+
+  // Update the previous lap time
   previousLapTime = currentLapTime;
-}
-
-// Add hour display dynamically
-function addHourDisplay() {
-  const hourSpan = document.createElement('span');
-  hourSpan.id = 'hour-display';
-  hourSpan.innerText = '00';
-  const separator = document.createTextNode(':');
-  
-  const stopwatch = document.getElementById('stopwatch');
-  stopwatch.insertBefore(hourSpan, document.getElementById('minute-display'));
-  stopwatch.insertBefore(separator, document.getElementById('minute-display'));
 }
