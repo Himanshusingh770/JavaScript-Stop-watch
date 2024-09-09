@@ -3,12 +3,13 @@ let timerInterval;
 let lapCounter = 0;
 let previousLapTime = 0;
 let isStopwatchActive = false;
+let pausedTime = 0;
 
 // Start the stopwatch
 function startStopwatch() {
   if (!isStopwatchActive) {
     isStopwatchActive = true;
-    startTime = Date.now() - (previousLapTime || 0); // Adjust for time after a lap or pause
+    startTime = Date.now() - pausedTime; // Adjust for paused time
     timerInterval = setInterval(updateDisplay, 10);
 
     toggleButtonVisibility({ start: 'none', stop: 'inline-block', lap: 'inline-block', reset: 'inline-block' });
@@ -21,7 +22,7 @@ function stopStopwatch() {
   isStopwatchActive = false;
   clearInterval(timerInterval);
 
-  previousLapTime = Date.now() - startTime;
+  pausedTime = Date.now() - startTime; // Save paused time
 
   toggleButtonVisibility({ start: 'inline-block', stop: 'none', lap: 'inline-block', reset: 'inline-block' });
   document.getElementById('lap').disabled = true;
@@ -33,8 +34,9 @@ function resetStopwatch() {
   clearInterval(timerInterval);
 
   startTime = 0;
-  previousLapTime = 0;
+  pausedTime = 0;
   lapCounter = 0;
+  previousLapTime = 0;
 
   updateDisplay(true); // Reset display
 
@@ -50,12 +52,18 @@ function resetStopwatch() {
 function updateDisplay(isReset = false) {
   const elapsedTime = new Date(Date.now() - startTime);
 
-  // Using Date methods to extract time components
+  let hours = elapsedTime.getUTCHours();  
   let minutes = elapsedTime.getUTCMinutes();
   let seconds = elapsedTime.getUTCSeconds();
-  let milliseconds = Math.floor(elapsedTime.getUTCMilliseconds() / 10); // Convert ms to centiseconds
+  let milliseconds = Math.floor(elapsedTime.getUTCMilliseconds() / 10); 
 
-  // Update display with formatted time
+  if (hours > 0) {
+    document.getElementById('hour-display').classList.remove('hidden');
+  } else {
+    document.getElementById('hour-display').classList.add('hidden');
+  }
+
+  document.getElementById('hour-display').innerText = formatTime(hours);
   document.getElementById('minute-display').innerText = formatTime(minutes);
   document.getElementById('second-display').innerText = formatTime(seconds);
   document.getElementById('millisecond-display').innerText = formatMilliseconds(milliseconds);
@@ -65,46 +73,54 @@ function updateDisplay(isReset = false) {
   }
 }
 
-
 // Record the lap
 function recordLap() {
   if (!isStopwatchActive) return; // Prevent lap recording when stopwatch is stopped
 
   const currentLapTime = Date.now() - startTime;
-  const lapDifference = currentLapTime - previousLapTime;
+  const lapTime = currentLapTime - previousLapTime; // Calculate lap time based on the previous lap
 
-  // Calculate time components for lap difference
-  const formattedLapDiff = formatLapDifference(lapDifference);
+  // Update previousLapTime for the next lap
+  previousLapTime = currentLapTime;
+
+  // Create formatted lap time and total time
+  const formattedLapTime = formatLapDifference(lapTime);
   const formattedTotalTime = formatLapDifference(currentLapTime);
 
   // Create a new row for the lap
   const lapRow = document.createElement('tr');
   lapRow.innerHTML = `
     <td>${++lapCounter}</td>
-    <td>${formattedLapDiff}</td>
+    <td>${formattedLapTime}</td>
     <td>${formattedTotalTime}</td>
   `;
 
-  // Prepend the new row to the laps table (show most recent lap first)
+  // Prepend the new row to the laps table
   const lapsContainer = document.getElementById('laps-container');
   lapsContainer.insertBefore(lapRow, lapsContainer.firstChild);
 
   document.getElementById('laps-table').style.display = 'table'; // Show laps table
-
-  // Update the previous lap time
-  previousLapTime = currentLapTime;
 }
 
-// Helper function to format lap differences
+// Helper functions
 function formatLapDifference(lapTime) {
-  let minutes = Math.floor(lapTime / 60000);
-  let seconds = Math.floor((lapTime % 60000) / 1000);
-  let milliseconds = Math.floor((lapTime % 1000) / 10);
+  // Create a new Date object with lapTime milliseconds
+  const lapDate = new Date(lapTime);
 
-  return `${formatTime(minutes)}:${formatTime(seconds)}.${formatMilliseconds(milliseconds)}`;
+  // Extract time components from the Date object
+  const minutes = lapDate.getUTCMinutes();
+  const seconds = lapDate.getUTCSeconds();
+  const milliseconds = Math.floor(lapDate.getUTCMilliseconds() / 10); // Convert ms to centiseconds
+
+  // Format the components
+  const formattedMinutes = String(minutes).padStart(2, '0');
+  const formattedSeconds = String(seconds).padStart(2, '0');
+  const formattedMilliseconds = String(milliseconds).padStart(2, '0');
+
+  return `${formattedMinutes}:${formattedSeconds}.${formattedMilliseconds}`;
 }
 
-// Helper functions for formatting time
+
 function formatTime(time) {
   return time < 10 ? '0' + time : time;
 }
@@ -113,14 +129,15 @@ function formatMilliseconds(ms) {
   return ms.toString().padStart(2, '0');
 }
 
-// Helper function to reset the display
 function resetDisplay() {
+  document.getElementById('hour-display').classList.add('hidden');
+  document.getElementById('hour-display').innerText = "00";
   document.getElementById('minute-display').innerText = "00";
   document.getElementById('second-display').innerText = "00";
   document.getElementById('millisecond-display').innerText = "00";
 }
 
-// Helper function to toggle visibility of buttons
+// Toggle button visibility
 function toggleButtonVisibility({ start, stop, lap, reset }) {
   document.getElementById('start').style.display = start;
   document.getElementById('stop').style.display = stop;
