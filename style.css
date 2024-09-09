@@ -1,0 +1,110 @@
+/* Basic Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background-color: #f2f2f2;
+}
+
+/* Stopwatch Container Styling */
+.stopwatch-container {
+  text-align: center;
+  background-color: #00ffe557;
+  padding: 100px 140px;
+  border-radius: 10px;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Headings */
+h1, h2 {
+  color: white;
+  font-family: 'Times New Roman', Times, serif;
+  font-weight: 300;
+  margin-bottom: 20px;
+}
+
+/* Time Display */
+.time-display {
+  font-size: 4em;
+  margin: 20px 0;
+  color: white;
+}
+
+/* Hide hour section by default */
+.hidden {
+  display: none;
+}
+
+/* Buttons Styling */
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  border-radius: 30px;
+}
+
+/* Button Styles */
+button {
+  padding: 10px 20px;
+  font-size: 1.5em;
+  border: 2px solid white;
+  background-color: transparent;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.5s ease, color 0.3s ease;
+  border-radius: 50%;
+}
+
+button:hover {
+  background-color: white;
+  color: #00ffdd;
+}
+
+/* Disabled Button Styling */
+button:disabled {
+  background-color: #ccc;
+  color: #666;
+  border: 2px solid #999;
+  cursor: not-allowed;
+}
+
+/* Hidden Buttons (Default State) */
+#stop, #lap, #reset {
+  display: none;
+}
+
+/* Lap Table Styling */
+#laps-table {
+  margin-top: 20px;
+  color: white;
+  text-align: center;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#laps-table th, #laps-table td {
+  padding: 10px;
+  border: 1px solid white;
+}
+
+#laps-table th {
+  background-color: #333;
+}
+
+#laps-table td {
+  background-color: #444;
+}
+
+#laps-table {
+  display: none; /* Hide laps table initially */
+}
